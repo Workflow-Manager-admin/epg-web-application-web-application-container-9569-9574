@@ -47,6 +47,18 @@ It correctly bundles React in production mode and optimizes the build for the be
 The build is minified and the filenames include the hashes.\
 Your app is ready to be deployed!
 
+#### To preview/build locally
+
+After building:
+
+```sh
+npm run build
+npm run serve
+```
+
+This will launch a static server at http://localhost:3000 (default) serving your production bundle from the `build` directory.
+- Your JS bundle files (e.g. static/js/main.[hash].js) and index.html should reside in the **build** folder.
+
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
 ### `npm run eject`
@@ -93,11 +105,41 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 
 ## Troubleshooting 404 errors for `bundle.js`
 
-If you see a 404 error for `bundle.js` when loading the app:
+If you see a 404 error for `bundle.js` (or main.[hash].js) when loading the app:
 
-1. **Ensure you are starting the app correctly**  
-   - For development: use `npm start` (do NOT manually serve `build/`)
-   - For production: build (`npm run build`), then serve `/build` with a static file server like `serve -s build`.
+**Checklist:**
+1. After running `npm run build`, ensure the `build/static/js` folder exists and contains a file like `main.[hash].js`. 
+   - There is intentionally no `bundle.js` in modern Create React App; it should be `main.[hash].js`.
+   - The built `index.html` will reference the correct hashed filename.
+
+2. **Do not try to open `build/index.html` directly in the browser**  
+   - It must be served via a static server: use `npm run serve` or `npx serve -s build`.
+
+3. **Check for misconfigured static hosting (e.g., on your server or cloud host)**  
+   - The server should correctly serve files inside the `build` directory and respect React's routing.
+
+4. **Check your public path/Base URL (PUBLIC_URL or homepage in package.json):**
+   - If deploying at a subpath, set `homepage` in `package.json` appropriately.
+   - For most SPAs deployed at site root, omit `homepage` entirely (the default in this repo).
+
+5. **For development:**  
+   - Use `npm start` only.
+
+6. **If you see 404s pointing to `/bundle.js`:**  
+   - Make sure no legacy config, service worker, or server is trying to load a file called `bundle.js`. Modern React apps use hashed filenames such as `main.xxxxx.js`, not `bundle.js`.
+
+7. Clean build and reinstall if you have issues:
+   ```sh
+   rm -rf node_modules build
+   npm install
+   npm run build
+   npm run serve
+   ```
+
+8. If deploying to production, be sure to use a static server setup that mirrors the above local `serve -s build` pattern.
+
+For more details, see Create React App deployment docs:
+https://facebook.github.io/create-react-app/docs/deployment
 
 2. **Check no extraneous `homepage` or `PUBLIC_URL` is set**  
    - There should be NO `"homepage"` field in `package.json` unless deploying to a subpath.
