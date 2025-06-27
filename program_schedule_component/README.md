@@ -103,58 +103,130 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 
 ---
 
-## Troubleshooting 404 errors for `bundle.js`
+## Production Deployment: Web Server Configuration for Create React App
 
-If you see a 404 error for `bundle.js` (or main.[hash].js) when loading the app:
+### General Principle
 
-**Checklist:**
-1. After running `npm run build`, ensure the `build/static/js` folder exists and contains a file like `main.[hash].js`. 
-   - There is intentionally no `bundle.js` in modern Create React App; it should be `main.[hash].js`.
-   - The built `index.html` will reference the correct hashed filename.
+The build output (`npm run build`) generates hashed filenames in `build/static/js` and `build/static/css`.  
+**There will never be a `bundle.js`**; requests to `/bundle.js` will 404.  
+All web server configs must:
+- Serve static assets from `build/` and `build/static/`.
+- Route *all unknown requests* (non-static file requests) to `build/index.html` (for proper client-side routing).
 
-2. **Do not try to open `build/index.html` directly in the browser**  
-   - It must be served via a static server: use `npm run serve` or `npx serve -s build`.
+---
 
-3. **Check for misconfigured static hosting (e.g., on your server or cloud host)**  
-   - The server should correctly serve files inside the `build` directory and respect React's routing.
+### 1. Using the local `serve` tool
 
-4. **Check your public path/Base URL (PUBLIC_URL or homepage in package.json):**
-   - If deploying at a subpath, set `homepage` in `package.json` appropriately.
-   - For most SPAs deployed at site root, omit `homepage` entirely (the default in this repo).
+- **Recommended for testing locally.**
+- Run:
+    ```sh
+    npm run build
+    npm run serve
+    ```
+- This runs `npx serve -s build`, which handles static files and SPA fallback automatically (routes unknown paths to `index.html`).
+- **Do not open `index.html` from disk in the browser.**
 
-5. **For development:**  
-   - Use `npm start` only.
+---
 
-6. **If you see 404s pointing to `/bundle.js`:**  
-   - Make sure no legacy config, service worker, or server is trying to load a file called `bundle.js`. Modern React apps use hashed filenames such as `main.xxxxx.js`, not `bundle.js`.
+### 2. Node.js/Express Example
 
-7. Clean build and reinstall if you have issues:
-   ```sh
-   rm -rf node_modules build
-   npm install
-   npm run build
-   npm run serve
-   ```
+```js
+const express = require('express');
+const path = require('path');
+const app = express();
 
-8. If deploying to production, be sure to use a static server setup that mirrors the above local `serve -s build` pattern.
+const buildPath = path.join(__dirname, 'build');
 
-For more details, see Create React App deployment docs:
-https://facebook.github.io/create-react-app/docs/deployment
+app.use(express.static(buildPath));
 
-2. **Check no extraneous `homepage` or `PUBLIC_URL` is set**  
-   - There should be NO `"homepage"` field in `package.json` unless deploying to a subpath.
-   - `.env` file should NOT define `PUBLIC_URL` unless needed.
+// Serve index.html for all non-static-file routes (SPA support)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(buildPath, 'index.html'));
+});
 
-3. **Clear your caches and do a clean install**  
-   ```
-   rm -rf node_modules build
-   npm install
-   npm start
-   ```
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Serving app on http://localhost:${PORT}`);
+});
+```
 
-4. **If deploying behind a proxy, ensure the root path is correct**  
-   - If serving at a subpath, adjust `homepage` and static server config accordingly.
-   - For default single-page deployments, no extra config is needed.
+---
 
-5. **Consult Create React App documentation**  
-   https://facebook.github.io/create-react-app/docs/deployment
+### 3. NGINX Example
+
+(Place this in your NGINX server config, or a custom `location` block.)
+
+```
+server {
+    listen 80;
+    server_name example.com;  # Change to your domain
+
+    root /path/to/your/build;
+
+    # Serve static files first
+    location /static/ {
+        alias /path/to/your/build/static/;
+        expires 1y;
+        add_header Cache-Control "public";
+    }
+
+    # Fallback for all SPA routes to index.html
+    location / {
+        try_files $uri /index.html;
+    }
+}
+```
+
+---
+
+### 4. Apache Example (`.htaccess` in your build dir)
+
+Enable RewriteEngine and add:
+
+```
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  # Redirect all requests not matching a file/folder to index.html
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Serve static assets with long cache for /static/
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|png|jpg|svg|woff2)$">
+    Header set Cache-Control "max-age=31536000, public"
+  </FilesMatch>
+</IfModule>
+```
+
+---
+
+### 5. Bundler/Static File Requests: Preventing Broken `/bundle.js` Loading
+
+- **Modern Create React App will reference hashed JS/CSS files in your built `index.html`.**
+- Never reference `/bundle.js` or `/main.js` directly in your HTML or service worker code.
+- If you see calls for `/bundle.js`, check:
+  - No legacy code trying to load `bundle.js` (audit your HTML/JS for these references).
+  - No custom service workers or outdated caches are forcing this request (clear your browser cache and Service Workers).
+  - No misconfiguration in your hosting provider that rewrites requests wrong.
+
+---
+
+### 6. Troubleshooting and Clean Setup
+
+- Clean install if you encounter persistent static file problems:
+    ```sh
+    rm -rf node_modules build
+    npm install
+    npm run build
+    npm run serve
+    ```
+- If deploying to production, use only one of the above static server patterns and ensure fallback to `index.html` for all non-static file routes.
+
+---
+
+For more details, see the Create React App [deployment documentation](https://facebook.github.io/create-react-app/docs/deployment).
+
