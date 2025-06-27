@@ -1,0 +1,5 @@
+{
+  "task_description": "{'component_name': 'Program Schedule Component', 'description': 'This component is responsible for displaying the list of TV programs in a structured format, allowing users to browse through current and upcoming shows. It includes features for filtering by channel, genre, and time.', 'framework': 'React JS', 'interfaces': '', 'algorithms': '', 'pseudocode': '', 'figma_components': []}",
+  "tasks": {},
+  "next_task_id": 1
+}

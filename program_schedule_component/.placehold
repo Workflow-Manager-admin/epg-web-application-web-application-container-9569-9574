@@ -1,0 +1,2 @@
+This file ensures the program_schedule_component directory exists for build scripts that expect it.
+Safe to ignore or delete if the directory is populated.
