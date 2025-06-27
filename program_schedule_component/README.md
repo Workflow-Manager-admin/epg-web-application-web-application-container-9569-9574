@@ -2,6 +2,26 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Environment Setup: Backend API URL
+
+**IMPORTANT:**  
+Ensure you create a `.env` file based on `.env.example` with a valid backend API URL.  
+- **Do NOT use `0.0.0.0` as a host!**  
+- Use `localhost` for local dev:  
+  ```
+  REACT_APP_EPG_BACKEND_URL=http://localhost:8000/api/epg/programs
+  ```
+- For production, set the proper backend hostname or IP.
+
+If you see errors like `connect ECONNREFUSED 0.0.0.0:8000` in the browser or dev tools, it usually means:
+1. The backend URL is wrongly set to `0.0.0.0` (which is never a public address).
+2. The backend server isn't running or isn't listening on `localhost:8000`.
+
+**Troubleshooting steps:**
+- Check your `.env` file and ensure the variable is set as shown above.
+- Restart your React dev server after editing the `.env` (run `npm start` again).
+- Ensure your backend server is running and listening on the right address.
+
 ## Available Scripts
 
 In the project directory, you can run:
