@@ -88,3 +88,31 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+---
+
+## Troubleshooting 404 errors for `bundle.js`
+
+If you see a 404 error for `bundle.js` when loading the app:
+
+1. **Ensure you are starting the app correctly**  
+   - For development: use `npm start` (do NOT manually serve `build/`)
+   - For production: build (`npm run build`), then serve `/build` with a static file server like `serve -s build`.
+
+2. **Check no extraneous `homepage` or `PUBLIC_URL` is set**  
+   - There should be NO `"homepage"` field in `package.json` unless deploying to a subpath.
+   - `.env` file should NOT define `PUBLIC_URL` unless needed.
+
+3. **Clear your caches and do a clean install**  
+   ```
+   rm -rf node_modules build
+   npm install
+   npm start
+   ```
+
+4. **If deploying behind a proxy, ensure the root path is correct**  
+   - If serving at a subpath, adjust `homepage` and static server config accordingly.
+   - For default single-page deployments, no extra config is needed.
+
+5. **Consult Create React App documentation**  
+   https://facebook.github.io/create-react-app/docs/deployment

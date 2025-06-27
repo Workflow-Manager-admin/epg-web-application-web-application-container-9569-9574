@@ -1,5 +1,6 @@
 #!/bin/bash
-cd /home/kavia/workspace/epg-web-application-web-application-container-9569-9574/program_schedule_component
+cd "$(dirname "$0")/program_schedule_component" || exit 1
+npm install --no-audit --no-fund
 npm run build
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
